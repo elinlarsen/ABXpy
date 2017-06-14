@@ -55,16 +55,18 @@ def test_basic():
         assert stats['nb_triplets'] == 8
         assert stats['nb_by_levels'] == 2
         task.generate_triplets()
+
         f = h5py.File('data.abx', 'r')
-        triplets = f['triplets']['data'][...]
-        by_indexes = f['triplets']['by_index'][...]
-        triplets_block0 = triplets[slice(*by_indexes[0])]
-        triplets_block1 = triplets[slice(*by_indexes[1])]
+        # triplets = f['triplets']['data'][...]
+        # by_indexes = f['triplets']['by_index'][...]
+        # triplets_block0 = triplets[slice(*by_indexes[0])]
+        # triplets_block1 = triplets[slice(*by_indexes[1])]
         triplets_block0 = get_triplets(f, '0')
         triplets_block1 = get_triplets(f, '1')
         triplets = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0], [3, 2, 1]])
         assert tables_equivalent(triplets, triplets_block0), error_triplets
         assert tables_equivalent(triplets, triplets_block1), error_triplets
+
         pairs = [2, 6, 7, 3, 8, 12, 13, 9]
         pairs_block0 = get_pairs(f, '0')
         pairs_block1 = get_pairs(f, '1')
@@ -229,6 +231,40 @@ def test_filter_on_C():
         triplets_block0 = get_triplets(f, '0')
         triplets = np.array([[2, 1, 0], [2, 3, 0], [3, 0, 1], [3, 2, 1]])
         assert tables_equivalent(triplets, triplets_block0), error_triplets
+    finally:
+        try:
+            os.remove('data.abx')
+            os.remove('data.item')
+        except:
+            pass
+
+
+# testing capped subsampling in triplet generation
+def test_capped_subsampling():
+    items.generate_testitems(2, 3, name='data.item')
+    try:
+        task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2')
+        stats = task.stats
+        assert stats['nb_blocks'] == 8, "incorrect stats: number of blocks"
+        assert stats['nb_triplets'] == 8
+        assert stats['nb_by_levels'] == 2
+
+        task.generate_triplets()
+        f = h5py.File('data.abx', 'r')
+        triplets = f['triplets']['data'][...]
+        by_indexes = f['triplets']['by_index'][...]
+        triplets_block0 = triplets[slice(*by_indexes[0])]
+        triplets_block1 = triplets[slice(*by_indexes[1])]
+        triplets_block0 = get_triplets(f, '0')
+        triplets_block1 = get_triplets(f, '1')
+        triplets = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0], [3, 2, 1]])
+        assert tables_equivalent(triplets, triplets_block0), error_triplets
+        assert tables_equivalent(triplets, triplets_block1), error_triplets
+        pairs = [2, 6, 7, 3, 8, 12, 13, 9]
+        pairs_block0 = get_pairs(f, '0')
+        pairs_block1 = get_pairs(f, '1')
+        assert (set(pairs) == set(pairs_block0[:, 0])), error_pairs
+        assert (set(pairs) == set(pairs_block1[:, 0])), error_pairs
     finally:
         try:
             os.remove('data.abx')

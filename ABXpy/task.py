@@ -482,10 +482,11 @@ class Task(object):
         if size > 0:
             ind_type = fit_integer_type(size, is_signed=False)
             # if sampling in the absence of triplets filters, do it here
-            if self.sampling and not(self.filters.ABX):
+            if self.sampling and not self.filters.ABX:
                 indices = self.sampler.sample(size, dtype=ind_type)
             else:
                 indices = np.arange(size, dtype=ind_type)
+
             # generate triplets from indices
             iX = np.mod(indices, len(X))
             iB = np.mod(np.divide(indices, len(X)), len(B))
@@ -498,10 +499,10 @@ class Task(object):
                     on_across_by_values, db, triplets)
                 triplets = triplets[ABX_filter_ind]
                 size = triplets.shape[0]
+
                 # if sampling in the presence of triplets filters, do it here
                 if self.sampling:
-                    ind_type = fit_integer_type(
-                        size, is_signed=False)
+                    ind_type = fit_integer_type(size, is_signed=False)
                     ABX_sample_ind = self.sampler.sample(size, dtype=ind_type)
                     triplets = triplets[ABX_sample_ind, :]
 
@@ -674,13 +675,13 @@ associated pairs
         if sample is not None:
             self.sampling = True
             if self.stats['approximate_nb_triplets']:
-                raise ValueError('Cannot sample if number of triplets is \
-                    computed approximately')
+                raise ValueError('Cannot sample if number of triplets '
+                                 'is computed approximately')
+
             # FIXME for now just something as random a possible
             np.random.seed()
             N = self.total_n_triplets
-            if sample < 1:  # proportion of triplets to be sampled
-                sample = np.uint64(round(sample * N))
+            sample = np.uint64(sample)
             self.sampler = sampler.IncrementalSampler(N, sample)
             self.n_triplets = sample
         else:
@@ -734,13 +735,13 @@ associated pairs
                 by_values = dict(db.iloc[0])
 
                 datasets, indexes = self.regressors.get_regressor_info()
-                with (h5io.H5IO(
+                with h5io.H5IO(
                         filename=output, datasets=datasets,
                         indexes=indexes,
-                        group='/regressors/' + str(by) + '/')) as out_regs:
+                        group='/regressors/' + str(by) + '/') as out_regs:
                     self._compute_triplets(
                         by, out, out_block_index,
-                        out_regs, sample, db, fh, by_values, display=display)
+                        out_regs, db, fh, by_values, display=display)
 
                     # if no triplets found: delete by block
                     if self.current_index == self.by_block_indices[-1]:
@@ -771,22 +772,22 @@ associated pairs
             self.generate_pairs(output, tmpdir=tmpdir)
 
     def _compute_triplets(self, by, out, out_block_index,
-                          out_regs, sample, db, fh, by_values, display=None):
+                          out_regs, db, fh, by_values, display=None):
         #out_index = h5io.H5IO(filename=output, datasets=datasets, group='/on_across_block_index/' + str(by) + '/')
 
         # instantiate by regressors here
         self.regressors.set_by_regressors(by_values)
 
         # iterate over on/across blocks
-        for block_key, block in (self.on_across_blocks[by]
-                                 .groups.iteritems()):
+        on_across_blocks = self.on_across_blocks[by].groups.iteritems()
+        for block_key, block in on_across_blocks:
             if self.verbose > 0:
                 display.update('block', 1)
-            # allow to get on, across, by values as well as values
-            # of other variables that are determined by these
+
+            # allow to get on, across, by values as well as values of
+            # other variables that are determined by these
             on_across_by_values = dict(db.ix[block[0]])
-            if ((self.filters
-                 .on_across_by_filter(on_across_by_values))):
+            if self.filters.on_across_by_filter(on_across_by_values):
                 # instantiate on_across_by regressors here
                 self.regressors.set_on_across_by_regressors(
                     on_across_by_values)
@@ -1142,6 +1143,7 @@ _OR_PROPORTION] [--stats_only] [-h] [-v VERBOSE_LEVEL] \
         description='ABX task specification')
     message = """must be defined by the database you are using (e.g. speaker \
 or phonemes, if your database contains columns defining these attributes)"""
+
     # I/O files
     g1 = parser.add_argument_group('I/O files')
     g1.add_argument(
@@ -1151,28 +1153,44 @@ or phonemes, if your database contains columns defining these attributes)"""
     g1.add_argument('output', nargs='?', default=None,
                     help='optional: output file, where the results of the '
                          'analysis will be put')
+
     # Task specification
     g2 = parser.add_argument_group('Task specification')
+
     g2.add_argument(
         '-o', '--on', required=True, help='ON attribute, ' + message)
+
     g2.add_argument('-a', '--across',  nargs='+', default=[],
                     help='optional: ACROSS attribute(s), ' + message)
+
     g2.add_argument('-b', '--by', nargs='+', default=[],
                     help='optional: BY attribute(s), ' + message)
+
     g2.add_argument('-f', '--filt', nargs='+', default=[],
                     help='optional: filter specification(s), ' + message)
-    g2.add_argument('-s', '--sample', default=None, type=float,
-                    help='optional: if a real number in ]0;1[: sampling '
-                         'proportion, if a strictly positive integer: number '
-                         'of triplets to be sampled')
+
+    # g2.add_argument('-s', '--sample', default=None, type=float,
+    #                 help='optional: if a real number in ]0;1[: sampling '
+    #                      'proportion, if a strictly positive integer: number '
+    #                      'of triplets to be sampled')
+
+    g2.add_argument(
+        '-s', '--sample', default=None, type=int,
+        help='''optional: maximum number K of triplets in each on-across-by cell.
+        Let N be the total number of triplet in a cell, ABX analysis
+        is performed on the N triplets when K>=N, or on K among N
+        random triplets when K<N.''')
+
     g2.add_argument('-t', '--threshold', default=None, type=int,
                     help='optional: threshold on the maximal size of a block of'
                          ' triplets sharing the same regressors, triplets may '
                          'be sampled')
+
     # Regressors specification
     g3 = parser.add_argument_group('Regressors specification')
     g3.add_argument('-r', '--reg', nargs='+', default=[],
                     help='optional: regressor specification(s), ' + message)
+
     # Computation parameters
     g4 = parser.add_argument_group('Computation parameters')
     g4.add_argument('--stats_only', default=False, action='store_true',

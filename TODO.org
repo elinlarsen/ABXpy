@@ -1,0 +1,41 @@
+* Le 07/06/2017 à 18:16, Emmanuel Dupoux a écrit :
+
+  Si je comprends bien, l'option -s que Roland a implementé effectue
+  un subsampling des triplets ABX proportionnel au parametre s, et
+  ceci dans chaque cellulle on-across-by.
+
+  Ceci résulte dans le fait que certaines cellules trop peu peuplées
+  sont tout simplement éliminées. (c'est le même comportement quand -s
+  est un entier > 1; s est alors interprété comme le nb max de triplet
+  total désiré; c'est transformé en proportion du nb total de triplet
+  théorique calculé dans le dry run).
+
+  Ce n'est pas ce qu'on veut.
+
+  Ce qu'on voudrait plutot, c'est /capper/ c'est à dire fixer un max
+  de triplets dans chaque cellulle on-across-by, de sorte que les
+  petites cellules ne sont pas éliminées: c'est juste que les grandes
+  cellules n'auront pas plus que K observations (K étant fixé pour
+  avoir une précision suffisante pour le calcul du score ABX; par
+  exemple K=100 ou K=1000).
+
+  Je pense qu'une modif assez simple du code de Roland devrait
+  permettre de faire ça.
+
+  A la fin, il s'agit toujours d"échantillonner cellulle par cellule
+  parmi un nombre potentiellement grand de triplets ABX. Mais ici, le
+  comportement doit être ajusté à chaque cellule. il y a (au moins) 3
+  cas de figures à prendre en compte.
+
+  - K est plus grand au égal au nb N de triplets dans la
+    cellulle--> calculer et garder les N triplets.
+
+  - K est plus petit, mais assez proche de N (du genre entre 1 et 10
+    fois plus petit)--> calculer les N triplets, permuter
+    aléatoirement et en prendre K (les K premiers).
+
+  - K est beaucoup plus petit que N (plus de 10 fois plus petit)-->
+    sampler K parmi N en vérifiant qu'on n'a pas samplé deux fois le
+    même. Roland a fait un code incrémental qui fait ça (et évite de
+    calculer explicitement les N triplets, ce qui est bien utile quand
+    N vaut mille milliards ou plus)
