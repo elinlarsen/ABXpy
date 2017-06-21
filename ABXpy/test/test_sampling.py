@@ -103,38 +103,36 @@ def test_simple_uniformity():
                          n=random.randrange(50, N))
 
 
-def test_sampling_task():
-    items.generate_testitems(4, 6, name='data.item')
-    try:
-        task = ABXpy.task.Task('data.item', 'c0', 'c1', ['c2', 'c3'])
-        print "stats computed"
-        # stats = task.stats
-        task.generate_triplets(sample=0.2)
-        os.remove('data.abx')
-        task.generate_triplets(sample=200)
-    finally:
-        try:
-            os.remove('data.abx')
-            os.remove('data.item')
-        except:
-            pass
+# def test_sampling_task():
+#     items.generate_testitems(4, 6, name='data.item')
+#     try:
+#         task = ABXpy.task.Task('data.item', 'c0', 'c1', ['c2', 'c3'])
+#         print "stats computed"
+#         # stats = task.stats
+#         task.generate_triplets(sample=0.2)
+#         os.remove('data.abx')
+#         task.generate_triplets(sample=200)
+#     finally:
+#         try:
+#             os.remove('data.abx')
+#             os.remove('data.item')
+#         except:
+#             pass
 
 
-import matplotlib.pyplot as plt
-
-
-def plot_uniformity(nb_resamples, N, K):
-    indices = []
-    for i in range(nb_resamples):
-        if i % 1000 == 0:
-            print('%d resamples left to do' % (nb_resamples - i))
-        sampler = sampling.sampler.IncrementalSampler(N, K)
-        current_N = 0
-        while current_N < N:
-            n = min(random.randrange(N / 10), N - current_N)
-            indices = indices + list(sampler.sample(n) + current_N)
-            current_N = current_N + n
-    plt.hist(indices, bins=100)
+# import matplotlib.pyplot as plt
+# def plot_uniformity(nb_resamples, N, K):
+#     indices = []
+#     for i in range(nb_resamples):
+#         if i % 1000 == 0:
+#             print('%d resamples left to do' % (nb_resamples - i))
+#         sampler = sampling.sampler.IncrementalSampler(N, K)
+#         current_N = 0
+#         while current_N < N:
+#             n = min(random.randrange(N / 10), N - current_N)
+#             indices = indices + list(sampler.sample(n) + current_N)
+#             current_N = current_N + n
+#     plt.hist(indices, bins=100)
 
 
 # test_simple_uniformity()

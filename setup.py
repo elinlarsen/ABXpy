@@ -55,7 +55,6 @@ setup(
         "pandas >= 0.13.1",
         "scipy >= 0.13.0",
         "tables",
-        "matplotlib"
     ],
     cmdclass={'test': PyTest},
 )

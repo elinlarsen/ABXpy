@@ -39,3 +39,11 @@
     même. Roland a fait un code incrémental qui fait ça (et évite de
     calculer explicitement les N triplets, ce qui est bien utile quand
     N vaut mille milliards ou plus)
+
+* function calls and roles from main
+main -> Task creation -> generate_triplets
+
+* insights
+** nb_triplets for each on/across block
+for block_key, count in stats['on_across_levels'].iteritems():
+    print stats['block_sizes'][block_key]
