@@ -44,8 +44,6 @@ In python:
 Example
 -------
 
-(TODO example for the ABX module documentation, to be moved in docs)
-
 An example of ABX triplet:
 
 +------+------+------+
@@ -951,8 +949,11 @@ class Task(object):
                             ind = np.arange(n)
                             i1 = 2 * ind
                             i2 = 2 * ind + 1
+
                             pairs = np.empty(
-                                shape=(2 * n, 1), dtype=pair_key_type)
+                                shape=(2 * n, 1),
+                                dtype=pair_key_type)
+
                             # FIXME change the encoding (and type_fitting)
                             # so that A,B and B,A have the same code ...
                             # (take a=min(a,b), b=max(a,b))
@@ -964,6 +965,7 @@ class Task(object):
                                 max_ind + 1) * triplets[:, 2]  # AX
                             pairs[i2, 0] = triplets[:, 1] + (
                                 max_ind + 1) * triplets[:, 2]  # BX
+
                             # FIXME do a unique here already? Do not store
                             # the inverse mapping ? (could sort triplets on
                             # pair1, complete pair1, sort on pair2,
@@ -994,8 +996,12 @@ class Task(object):
                         with h52np.H52NP(output_tmp) as f_in:
                             inp = f_in.add_dataset('pairs', str(by))
                             out = f_out.add_dataset(
-                                'unique_pairs', str(by), n_rows=n_pairs, n_columns=1,
-                                item_type=pair_key_type, fixed_size=False)
+                                'unique_pairs', str(by),
+                                n_rows=n_pairs,
+                                n_columns=1,
+                                item_type=pair_key_type,
+                                fixed_size=False)
+
                             # out = out_unique_pairs
                             last = -1
                             for pairs in inp:
@@ -1010,12 +1016,15 @@ class Task(object):
 
                         # store for ulterior decoding
                         store = pd.HDFStore(output)
-                        # use append to make use of table format, which is better at
-                        # handling strings without much space (fixed-size format)
+
+                        # use append to make use of table format,
+                        # which is better at handling strings without
+                        # much space (fixed-size format)
                         store.append('/feat_dbs/' + str(by), self.feat_dbs[by],
                                      expectedrows=len(self.feat_dbs[by]))
                         store.close()
-                        # FIXME generate inverse mapping to triplets (1 and 2) ?
+                        # FIXME generate inverse mapping to triplets
+                        # (1 and 2) ?
 
             # Now merge all datasets
             by_index = 0
@@ -1041,16 +1050,18 @@ class Task(object):
                     by_index += n_pairs_dict[by]
         finally:
             os.remove(output_tmp)
-        if self.verbose > 0:
+        if self.verbose:
             print("done.")
 
     # number of triplets when triplets with same on, across, by are
     # counted as one
+    #
     # FIXME current implementation won't work with A, B, X or ABX filters
+    #
     # FIXME lots of code in this function is repicated from
-    # on_across_triplets, generate_triplets and/or compute_stats: the maximum
-    # possible should be factored out, including the loop over by, loop over
-    # on_across iteration structure
+    # on_across_triplets, generate_triplets and/or compute_stats: the
+    # maximum possible should be factored out, including the loop over
+    # by, loop over on_across iteration structure
     def compute_nb_levels(self):
         if self.filters.A or self.filters.B or self.filters.X or \
            self.filters.ABX:

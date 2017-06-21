@@ -28,13 +28,13 @@
   cas de figures à prendre en compte.
 
   - K est plus grand au égal au nb N de triplets dans la
-    cellulle--> calculer et garder les N triplets.
+    cellule --> calculer et garder les N triplets.
 
   - K est plus petit, mais assez proche de N (du genre entre 1 et 10
-    fois plus petit)--> calculer les N triplets, permuter
+    fois plus petit) --> calculer les N triplets, permuter
     aléatoirement et en prendre K (les K premiers).
 
-  - K est beaucoup plus petit que N (plus de 10 fois plus petit)-->
+  - K est beaucoup plus petit que N (plus de 10 fois plus petit) -->
     sampler K parmi N en vérifiant qu'on n'a pas samplé deux fois le
     même. Roland a fait un code incrémental qui fait ça (et évite de
     calculer explicitement les N triplets, ce qui est bien utile quand

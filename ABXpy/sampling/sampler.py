@@ -7,6 +7,7 @@ size you specify. This is useful for very large sample sizes.
 Created on Mon Nov 18 03:14:53 2013
 
 @author: Thomas Schatz
+
 """
 
 import numpy as np
@@ -34,7 +35,6 @@ class IncrementalSampler(object):
     """
     # sampling K sample in a a population of size N
     # both K and N can be very large
-
     def __init__(self, N, K, step=None, relative_indexing=True,
                  dtype=np.int64):
         assert K <= N
@@ -196,9 +196,9 @@ def hypergeometric_sample(N, K, n):
     return k
 
 
-# returns uniform samples in [0, N-1] without replacement
-# the values 0.6 and 100 are based on empirical tests of the functions and
-# would need to be changed if the functions are changed
+# returns uniform samples in [0, N-1] without replacement the values
+# 0.6 and 100 are based on empirical tests of the functions and would
+# need to be changed if the functions are changed
 def sample_without_replacement(n, N, dtype=np.int64):
     """Returns uniform samples in [0, N-1] without replacement. It will use
     Knuth sampling or rejection sampling depending on the parameters n and N.
@@ -217,12 +217,11 @@ def sample_without_replacement(n, N, dtype=np.int64):
     return sample
 
 
-# this one would benefit a lot from being cythonized, efficient if n close to N
-# (np.random.choice with replace=False is cythonized and similar in spirit but
-# not better because it shuffles
-# the whole array of size N which is wasteful; once cythonized Knuth_sampling
-# should be superior to it
-# in all situation)
+# this one would benefit a lot from being cythonized, efficient if n
+# close to N (np.random.choice with replace=False is cythonized and
+# similar in spirit but not better because it shuffles the whole array
+# of size N which is wasteful; once cythonized Knuth_sampling should
+# be superior to it in all situation)
 def Knuth_sampling(n, N, dtype=np.int64):
     """This is the usual sampling function when n is comparable to N"""
     n = int(n)
@@ -239,8 +238,8 @@ def Knuth_sampling(n, N, dtype=np.int64):
     return sample
 
 
-# maybe use array for the first iteration then use python native sets for
-# faster set operations ?
+# maybe use array for the first iteration then use python native sets
+# for faster set operations ?
 def rejection_sampling(n, N, dtype=np.int64):
     """Using rejection sampling to keep a good performance if n << N"""
     remaining = n
@@ -302,7 +301,7 @@ for e, b in zip(tt, ra):
 
 """
 
-### Profiling rejection sampling and Knuth sampling ###
+# ## Profiling rejection sampling and Knuth sampling ###
 # could create an automatic test for finding the turning point and offset
 # between Knuth and rejection
 
