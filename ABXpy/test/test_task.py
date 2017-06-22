@@ -254,7 +254,7 @@ def test_sample_bad(item_file):
     task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
 
     with pytest.raises(AssertionError):
-        task.generate_triplets(max_samples=task.stats['nb_triplets'] + 1)
+        task.generate_triplets(max_samples=0)
 
     with pytest.raises(AssertionError):
         task.generate_triplets(max_samples=0.1)
@@ -300,20 +300,17 @@ def test_sample_all(item_file):
              ('3', '2', '3'): 6})
 
 
-# def test_sample_10(item_file):
-#     decode = create_unbalanced_items(item_file)
-#     task = ABXpy.task.Task(item_file, 'label')
+@pytest.mark.parametrize(
+    'max_samples, ntriplets',
+    [(10e6, 158), (10, 96), (5, 50), (2, 20), (1, 10)])
+def test_sample_10(item_file, max_samples, ntriplets):
+    create_unbalanced_items(item_file)
+    task = ABXpy.task.Task(item_file, 'label')
 
-#     task.generate_triplets(sample=10)
-#     with h5py.File(item_file.replace('.item', '.abx'), 'r') as f:
-#         triplets = f['triplets']['data'][...]
-#         count = collections.Counter(
-#             tuple(decode[k] for k in t) for t in triplets)
+    task.generate_triplets(max_samples=max_samples)
+    with h5py.File(item_file.replace('.item', '.abx'), 'r') as f:
+        triplets = f['triplets']['data'][...]
 
-#         assert count == collections.Counter(
-#             {('1', '2', '1'): 10,
-#              ('1', '3', '1'): 10,
-#              ('2', '1', '2'): 10,
-#              ('2', '3', '2'): 10,
-#              ('3', '1', '3'): 10,
-#              ('3', '2', '3'): 6})
+        # thsi assert is "hand-made" and we need a more rigorous test
+        # of sampling
+        assert len(triplets) == ntriplets

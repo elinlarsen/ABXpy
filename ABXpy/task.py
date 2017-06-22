@@ -564,7 +564,7 @@ class Task(object):
 
             # if sampling in the absence of triplets filters, do it here
             if self.sampling and not self.filters.ABX:
-                indices = self.sampler.sample(size, dtype=ind_type)
+                indices = self._compute_sampling(size, max_samples)
             else:
                 indices = np.arange(size, dtype=ind_type)
 
@@ -584,7 +584,8 @@ class Task(object):
                 # if sampling in the presence of triplets filters, do it here
                 if self.sampling:
                     ind_type = fit_integer_type(size, is_signed=False)
-                    ABX_sample_ind = self.sampler.sample(size, dtype=ind_type)
+                    ABX_sample_ind = self._compute_sampling(
+                        size, max_samples, dtype=ind_type)
                     triplets = triplets[ABX_sample_ind, :]
 
             if with_regressors:
@@ -757,10 +758,9 @@ class Task(object):
         if self.verbose:
             print('writing output to {}'.format(output))
 
+        self.n_triplets = self.total_n_triplets
         if max_samples is None:
-            # no sampling requested
             self.sampling = False
-            self.n_triplets = self.total_n_triplets
         else:
             self.sampling = True
 
@@ -780,11 +780,6 @@ class Task(object):
             # force max_samples to be a strictly positive int64
             max_samples = np.uint64(max_samples)
             assert max_samples > 0, 'max_samples must be strictly positive'
-
-            # TODO must be done at cell level, not task-wide
-            self.sampler = sampler.IncrementalSampler(
-                self.total_n_triplets, max_samples)
-            self.n_triplets = max_samples
 
         display = None
         if self.verbose:
@@ -1239,6 +1234,35 @@ class Task(object):
 
         return regressors
 
+    def _compute_sampling(self, N, K, dtype=None):
+        message = 'sampling K={} among N={}: '.format(K, N)
+
+        if dtype is None:
+            dtype = fit_integer_type(N, is_signed=False)
+
+        if K >= N:
+            if self.verbose:
+                print(message + 'keep all the triplets')
+
+            return np.arange(N, dtype=dtype)
+        elif N < 10 * K:
+            # K < N < 10*K : randomly permute the N triplets and keep
+            # the K first ones
+            if self.verbose:
+                print(message + 'random permutation')
+
+            indices = np.arange(N, dtype=dtype)
+            np.random.shuffle(indices)
+            return indices[:K]
+        else:
+            # N >> K: use incremental sampling
+            if self.verbose:
+                print(message + 'incremental sampling')
+
+            indices = sampler.IncrementalSampler(N, K).sample(N, dtype=dtype)
+            assert indices.shape[0] == K
+            return indices
+
 
 # utility function necessary because of current inconsistencies in panda:
 # you can't seem to index a dataframe with a tuple with only one element,
@@ -1253,8 +1277,7 @@ def on_across_from_key(key):
 
 
 def sort_and_threshold(permut, new_index, ind_type,
-                       threshold=None,
-                       count_only=False):
+                       threshold=None, count_only=False):
     sorted_index = new_index[permut]
     flag = np.concatenate(
         ([True], sorted_index[1:] != sorted_index[:-1], [True]))
@@ -1422,13 +1445,13 @@ def main():
     args = parse_arguments()
 
     # checks on the output file
-    if args.stats_only:
-        assert args.output, "The output file was not provided"
-    elif os.path.exists(args.output):
+    # if args.stats_only:
+    #     assert args.output, "The output file was not provided"
+    if args.output and os.path.exists(args.output):
         warnings.warn("Overwriting task file " + args.output, UserWarning)
         os.remove(args.output)
 
-    if args.sample and args.threshold:
+    if args.max_samples and args.threshold:
         warnings.warn(
             'The use of sampling AND threshold is not tested yet', UserWarning)
 
