@@ -1,17 +1,14 @@
-# -*- coding: utf-8 -*-
-"""This test script contains tests for the basic parameters of task.py"""
+"""Tests for the basic parameters of task.py"""
 
 import collections
 import h5py
 import numpy as np
-import os
 import pytest
-import sys
 
-package_path = os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
+# package_path = os.path.dirname(os.path.dirname(
+#     os.path.dirname(os.path.realpath(__file__))))
+# if not(package_path in sys.path):
+#     sys.path.append(package_path)
 
 import ABXpy.task
 import ABXpy.misc.items as items
@@ -206,30 +203,6 @@ def test_filter_on_C(item_file):
     triplets = np.array([[2, 1, 0], [2, 3, 0], [3, 0, 1], [3, 2, 1]])
     assert tables_equivalent(triplets, triplets_block0), error_triplets
 
-
-# testing capped subsampling in triplet generation
-def test_max_samples(item_file):
-    task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
-
-    stats = task.stats
-    assert stats['nb_blocks'] == 8, "incorrect stats: number of blocks"
-    assert stats['nb_triplets'] == 8
-    assert stats['nb_by_levels'] == 2
-
-    task.generate_triplets()
-
-    f = h5py.File(item_file.replace('.item', '.abx'), 'r')
-    triplets_block0 = get_triplets(f, '0')
-    triplets_block1 = get_triplets(f, '1')
-    triplets = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0], [3, 2, 1]])
-    assert tables_equivalent(triplets, triplets_block0), error_triplets
-    assert tables_equivalent(triplets, triplets_block1), error_triplets
-
-    pairs = [2, 6, 7, 3, 8, 12, 13, 9]
-    pairs_block0 = get_pairs(f, '0')
-    pairs_block1 = get_pairs(f, '1')
-    assert (set(pairs) == set(pairs_block0[:, 0])), error_pairs
-    assert (set(pairs) == set(pairs_block1[:, 0])), error_pairs
 
 
 def test_sample_all_triplets(item_file):
