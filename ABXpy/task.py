@@ -73,9 +73,9 @@ import tables
 import warnings
 
 # make sure the rest of the ABXpy package is accessible
-package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
+# package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+# if not(package_path in sys.path):
+#     sys.path.append(package_path)
 
 import ABXpy.database.database as database
 import ABXpy.h5tools.np2h5 as np2h5
@@ -887,11 +887,13 @@ class Task(object):
                 # instantiate on_across_by regressors here
                 self.regressors.set_on_across_by_regressors(
                     on_across_by_values)
+
                 on, across = on_across_from_key(block_key)
+
                 triplets, regressors, on_across_block_index = (
                     self.on_across_triplets(
-                        by, on, across, block,
-                        on_across_by_values, max_samples=max_samples))
+                        by, on, across, block, on_across_by_values,
+                        max_samples=max_samples))
 
                 out.write(triplets)
                 out_regs.write(regressors, indexed=True)
@@ -1041,7 +1043,8 @@ class Task(object):
 
                     with h5py.File(output) as fh:
                         fh['/unique_pairs'].attrs[str(by)] = (
-                            max_ind_dict[by] + 1, by_index, by_index + n_pairs_dict[by])
+                            max_ind_dict[by] + 1,
+                            by_index, by_index + n_pairs_dict[by])
                     by_index += n_pairs_dict[by]
         finally:
             os.remove(output_tmp)
